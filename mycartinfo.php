@@ -9,7 +9,7 @@ class MyCartInfo extends Module
     {
         $this->name = 'mycartinfo'; 
         $this->tab = 'front_office_features';
-        $this->version = '1.0.0';
+        $this->version = '1.1.0';
         $this->author = 'Troteseil Lucas';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -22,7 +22,7 @@ class MyCartInfo extends Module
 
 
         $this->displayName = $this->l('Mon Message Panier');
-        $this->description = $this->l('Ajoute un champ texte modifiable pour le panier.');
+    $this->description = $this->l('Ajoute un message personnalisable dans le panier avec switch d\'activation et recommandations produits.');
 
         $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
     }
@@ -96,7 +96,7 @@ class MyCartInfo extends Module
                             
                             $html .= '
                             <div class="col-md-4 col-sm-6 mb-3">
-                                <div class="card h-100 text-center" style="border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.05); overflow:hidden; border: 1px solid #eef0f3;">
+                                <div class="card h-100 text-center" style="border-radius:0px; overflow:hidden; border: 1px solid #eef0f3;">
                                     <a href="'.$link.'" style="display:block; background:#fff; padding:15px;">
                                         <img src="'.$img_url.'" class="card-img-top" alt="'.htmlspecialchars(is_array($product->name) ? $product->name[$id_lang] : $product->name).'" style="max-height:160px; object-fit:contain;">
                                     </a>
@@ -104,15 +104,15 @@ class MyCartInfo extends Module
                                         <h5 class="card-title" style="font-size:14px; margin-bottom:10px; font-weight:600; text-wrap: balance;">
                                             <a href="'.$link.'" style="color:#363a41; text-decoration:none;">'.(is_array($product->name) ? $product->name[$id_lang] : $product->name).'</a>
                                         </h5>
-                                        <p class="card-text fw-bold" style="color:#25b9d7; font-size:16px; margin-bottom: 15px;">'.$price.'</p>
+                                        <p class="card-text fw-bold" style="color:#212529; font-size:16px; margin-bottom: 15px;">'.$price.'</p>
                                         <form action="'.$this->context->link->getPageLink('cart').'" method="post" class="mt-auto">
                                             <input type="hidden" name="token" value="'.$token.'">
                                             <input type="hidden" name="id_product" value="'.$product->id.'">
                                             <input type="hidden" name="id_customization" value="0">
                                             <input type="hidden" name="add" value="1">
                                             <input type="hidden" name="action" value="update">
-                                            <button type="submit" class="btn btn-primary btn-sm w-100" data-button-action="add-to-cart" style="border-radius:8px; display:flex; align-items:center; justify-content:center; gap:5px; width: 100%;">
-                                                <i class="material-icons rtl-no-flip">&#xE8CC;</i> '.$this->l('Ajouter').'
+                                            <button type="submit" class="btn btn-primary btn-sm w-100" data-button-action="add-to-cart" style="border-radius:0px; display:flex; align-items:center; justify-content:center; gap:5px; width: 100%;">
+                                                '.$this->l('Ajouter').'
                                             </button>
                                         </form>
                                     </div>
