@@ -9,7 +9,7 @@ class MyCartInfo extends Module
     {
         $this->name = 'mycartinfo'; 
         $this->tab = 'front_office_features';
-        $this->version = '1.2.0';
+        $this->version = '1.2.1';
         $this->author = 'Troteseil Lucas';
         $this->need_instance = 0;
         $this->bootstrap = true;

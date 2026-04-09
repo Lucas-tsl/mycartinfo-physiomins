@@ -46,6 +46,10 @@ Module PrestaShop pour afficher un encart personnalisé dans le panier et recomm
 - Conservation du hook historique pour compatibilité
 - Mise à jour de la description BO et de la documentation
 
+### v1.2.1
+- Enregistrement automatique des nouveaux hooks en mise à jour du module
+- Correction pour affichage séparé du bandeau et des produits dans le thème
+
 ### v1.0.0
 - Création du module MyCartInfo
 - Ajout du message personnalisable sur le panier
