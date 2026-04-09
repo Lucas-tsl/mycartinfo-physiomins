@@ -10,6 +10,7 @@ Module PrestaShop pour afficher un encart personnalisé dans le panier et recomm
 - Grille responsive (desktop/tablette/mobile)
 - Bouton Ajouter au panier directement depuis la grille
 - Interface de configuration modernisée (style Bento)
+- Deux hooks séparés pour placer le bandeau et les produits où vous voulez
 
 ## 🚀 Cas d’usage
 
@@ -24,6 +25,7 @@ Module PrestaShop pour afficher un encart personnalisé dans le panier et recomm
 3. Activez les recommandations produits.
 4. Renseignez les IDs produits séparés par des virgules (ex: `12,45,78`).
 5. Enregistrez puis videz le cache PrestaShop si nécessaire.
+6. Placez les hooks séparément dans votre thème si besoin : `displayMyCartInfoBanner` et `displayMyCartInfoProducts`.
 
 ## 📚 Documentation & Liens utiles
 
@@ -38,6 +40,11 @@ Module PrestaShop pour afficher un encart personnalisé dans le panier et recomm
 - Ajout d’une grille responsive de produits dans le panier
 - Ajout du bouton Ajouter au panier dans chaque carte produit
 - Ajout du lien de documentation Notion dans le module et le README
+
+### v1.2.0
+- Séparation du bandeau et des produits en deux hooks distincts
+- Conservation du hook historique pour compatibilité
+- Mise à jour de la description BO et de la documentation
 
 ### v1.0.0
 - Création du module MyCartInfo

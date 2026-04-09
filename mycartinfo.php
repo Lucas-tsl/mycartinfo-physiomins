@@ -9,7 +9,7 @@ class MyCartInfo extends Module
     {
         $this->name = 'mycartinfo'; 
         $this->tab = 'front_office_features';
-        $this->version = '1.1.0';
+        $this->version = '1.2.0';
         $this->author = 'Troteseil Lucas';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -22,7 +22,7 @@ class MyCartInfo extends Module
 
 
         $this->displayName = $this->l('Mon Message Panier');
-    $this->description = $this->l('Ajoute un message personnalisable dans le panier avec switch d\'activation et recommandations produits.');
+    $this->description = $this->l('Ajoute un message personnalisable dans le panier avec deux hooks séparés pour le bandeau et les produits.');
 
         $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
     }
@@ -31,6 +31,8 @@ class MyCartInfo extends Module
     {
         return parent::install() 
             && $this->registerHook('displayMyCartInfo')
+            && $this->registerHook('displayMyCartInfoBanner')
+            && $this->registerHook('displayMyCartInfoProducts')
             && Configuration::updateValue('MY_CART_INFO_ACTIVE', 1)
             && Configuration::updateValue('MY_CART_INFO_MSG', '<p>Votre message par défaut ici.</p>', true)
             && Configuration::updateValue('MY_CART_INFO_PROD_ACTIVE', 0)
@@ -46,86 +48,110 @@ class MyCartInfo extends Module
             && parent::uninstall();
     }
 
-    // Affiche le message sur la page Panier via un hook personnalisé
+    // Hook de compatibilité : affiche les deux blocs si l'ancien hook est utilisé
     public function hookDisplayMyCartInfo($params)
     {
-        $html = '';
+        return $this->renderBannerBlock() . $this->renderProductsBlock();
+    }
 
-        // 1. Affichage du message personnalisé
-        if (Configuration::get('MY_CART_INFO_ACTIVE')) {
-            $message = Configuration::get('MY_CART_INFO_MSG');
-            if (!empty($message)) {
-                $html .= '
-                <div class="col-12 mt-3 mb-3">
-                    <div class="alert alert-info custom-cart-message">' . $message . '</div>
-                </div>';
-            }
+    public function hookDisplayMyCartInfoBanner($params)
+    {
+        return $this->renderBannerBlock();
+    }
+
+    public function hookDisplayMyCartInfoProducts($params)
+    {
+        return $this->renderProductsBlock();
+    }
+
+    protected function renderBannerBlock()
+    {
+        if (!Configuration::get('MY_CART_INFO_ACTIVE')) {
+            return '';
         }
 
-        // 2. Affichage des produits suggérés
-        if (Configuration::get('MY_CART_INFO_PROD_ACTIVE')) {
-            $ids_string = Configuration::get('MY_CART_INFO_PROD_IDS');
-            if (!empty($ids_string)) {
-                $ids = array_filter(array_map('intval', explode(',', $ids_string)));
-                $id_lang = $this->context->language->id;
-                
-                if (!empty($ids)) {
-                    $html .= '<div class="col-12 mt-4 mb-3">';
-                    $html .= '  <h4 style="font-weight: 600; margin-bottom: 20px;">'.$this->l('Vous aimerez aussi :').'</h4>';
-                    $html .= '  <div class="row">';
-                    
-                    foreach ($ids as $id_product) {
-                        $product = new Product((int)$id_product, false, $id_lang);
-                        
-                        if (Validate::isLoadedObject($product) && $product->active) {
-                            // Gestion sécurisée de l'image
-                            $cover = Product::getCover($product->id);
-                            $id_image = (is_array($cover) && isset($cover['id_image'])) ? $cover['id_image'] : 0;
-                            $image_params = $id_image ? $product->id . '-' . $id_image : $this->context->language->iso_code . '-default';
-                            
-                            // Gérer le cas où link_rewrite est un tableau (parfois le cas selon la config)
-                            $link_rewrite = is_array($product->link_rewrite) ? $product->link_rewrite[$id_lang] : $product->link_rewrite;
-                            if (empty($link_rewrite)) {
-                                $link_rewrite = 'produit';
-                            }
-
-                            $img_url = $this->context->link->getImageLink($link_rewrite, $image_params, 'home_default');
-                            $link = $this->context->link->getProductLink($product);
-                            $price = Tools::displayPrice($product->getPrice(true)); // Afficher TTC
-                            $token = Tools::getToken(false);
-                            
-                            $html .= '
-                            <div class="col-md-4 col-sm-6 mb-3">
-                                <div class="card h-100 text-center" style="border-radius:0px; overflow:hidden; border: 1px solid #eef0f3;">
-                                    <a href="'.$link.'" style="display:block; background:#fff; padding:15px;">
-                                        <img src="'.$img_url.'" class="card-img-top" alt="'.htmlspecialchars(is_array($product->name) ? $product->name[$id_lang] : $product->name).'" style="max-height:160px; object-fit:contain;">
-                                    </a>
-                                    <div class="card-body d-flex flex-column" style="padding: 15px; background: #fff;">
-                                        <h5 class="card-title" style="font-size:14px; margin-bottom:10px; font-weight:600; text-wrap: balance;">
-                                            <a href="'.$link.'" style="color:#363a41; text-decoration:none;">'.(is_array($product->name) ? $product->name[$id_lang] : $product->name).'</a>
-                                        </h5>
-                                        <p class="card-text fw-bold" style="color:#212529; font-size:16px; margin-bottom: 15px;">'.$price.'</p>
-                                        <form action="'.$this->context->link->getPageLink('cart').'" method="post" class="mt-auto">
-                                            <input type="hidden" name="token" value="'.$token.'">
-                                            <input type="hidden" name="id_product" value="'.$product->id.'">
-                                            <input type="hidden" name="id_customization" value="0">
-                                            <input type="hidden" name="add" value="1">
-                                            <input type="hidden" name="action" value="update">
-                                            <button type="submit" class="btn btn-primary btn-sm w-100" data-button-action="add-to-cart" style="border-radius:0px; display:flex; align-items:center; justify-content:center; gap:5px; width: 100%;">
-                                                '.$this->l('Ajouter').'
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>';
-                        }
-                    }
-                    
-                    $html .= '  </div>';
-                    $html .= '</div>';
-                }
-            }
+        $message = Configuration::get('MY_CART_INFO_MSG');
+        if (empty($message)) {
+            return '';
         }
+
+        return '
+        <div class="col-12 mt-3 mb-3">
+            <div class="alert alert-info custom-cart-message">' . $message . '</div>
+        </div>';
+    }
+
+    protected function renderProductsBlock()
+    {
+        if (!Configuration::get('MY_CART_INFO_PROD_ACTIVE')) {
+            return '';
+        }
+
+        $ids_string = Configuration::get('MY_CART_INFO_PROD_IDS');
+        if (empty($ids_string)) {
+            return '';
+        }
+
+        $ids = array_filter(array_map('intval', explode(',', $ids_string)));
+        if (empty($ids)) {
+            return '';
+        }
+
+        $id_lang = (int) $this->context->language->id;
+        $html = '<div class="col-12 mt-4 mb-3">';
+        $html .= '  <h4 style="font-weight: 600; margin-bottom: 20px;">'.$this->l('Vous aimerez aussi :').'</h4>';
+        $html .= '  <div class="row">';
+
+        foreach ($ids as $id_product) {
+            $product = new Product((int) $id_product, false, $id_lang);
+
+            if (!Validate::isLoadedObject($product) || !$product->active) {
+                continue;
+            }
+
+            $cover = Product::getCover($product->id);
+            $id_image = (is_array($cover) && isset($cover['id_image'])) ? (int) $cover['id_image'] : 0;
+            $image_params = $id_image ? $product->id . '-' . $id_image : 'home_default';
+
+            $link_rewrite = is_array($product->link_rewrite) ? ($product->link_rewrite[$id_lang] ?? '') : $product->link_rewrite;
+            if (empty($link_rewrite)) {
+                $link_rewrite = 'produit';
+            }
+
+            $product_name = is_array($product->name) ? ($product->name[$id_lang] ?? reset($product->name)) : $product->name;
+            $img_url = $this->context->link->getImageLink($link_rewrite, $image_params, 'home_default');
+            $link = $this->context->link->getProductLink($product);
+            $price = Tools::displayPrice($product->getPrice(true));
+            $token = Tools::getToken(false);
+
+            $html .= '
+            <div class="col-md-4 col-sm-6 mb-3">
+                <div class="card h-100 text-center" style="border-radius:0px; overflow:hidden; border: 1px solid #eef0f3;">
+                    <a href="'.$link.'" style="display:block; background:#fff; padding:15px;">
+                        <img src="'.$img_url.'" class="card-img-top" alt="'.htmlspecialchars($product_name).'" style="max-height:160px; object-fit:contain;">
+                    </a>
+                    <div class="card-body d-flex flex-column" style="padding: 15px; background: #fff;">
+                        <h5 class="card-title" style="font-size:14px; margin-bottom:10px; font-weight:600; text-wrap: balance;">
+                            <a href="'.$link.'" style="color:#363a41; text-decoration:none;">'.$product_name.'</a>
+                        </h5>
+                        <p class="card-text fw-bold" style="color:#212529; font-size:16px; margin-bottom: 15px;">'.$price.'</p>
+                        <form action="'.$this->context->link->getPageLink('cart').'" method="post" class="mt-auto">
+                            <input type="hidden" name="token" value="'.$token.'">
+                            <input type="hidden" name="id_product" value="'.$product->id.'">
+                            <input type="hidden" name="id_customization" value="0">
+                            <input type="hidden" name="add" value="1">
+                            <input type="hidden" name="action" value="update">
+                            <button type="submit" class="btn btn-primary btn-sm w-100" data-button-action="add-to-cart" style="border-radius:0px; display:flex; align-items:center; justify-content:center; gap:5px; width: 100%;">
+                                '.$this->l('Ajouter').'
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>';
+        }
+
+        $html .= '  </div>';
+        $html .= '</div>';
 
         return $html;
     }
@@ -263,9 +289,11 @@ class MyCartInfo extends Module
                 <p>Modifiez le message dans le formulaire en bas puis ajoutez la balise dans votre thème :</p>
                 <ul class="bento-instructions">
                     <li>'.$this->l('Ouvrez le fichier `cart.tpl` ou similaire.').'</li>
-                    <li>'.$this->l('Placez ce code à l\'endroit désiré :').'</li>
+                    <li>'.$this->l('Placez ces hooks à l\'endroit désiré :').'</li>
                 </ul>
-                <code class="bento-code">{hook h=\'displayMyCartInfo\'}</code>
+                <code class="bento-code">{hook h=\'displayMyCartInfoBanner\'}</code>
+                <code class="bento-code" style="margin-top:10px;">{hook h=\'displayMyCartInfoProducts\'}</code>
+                <p style="margin-top:10px; font-size:12px; color:#6c868e;">'.$this->l('Le hook historique displayMyCartInfo reste disponible pour compatibilité.').'</p>
             </div>
 
             <!-- Carte 3 : Informations développeur -->

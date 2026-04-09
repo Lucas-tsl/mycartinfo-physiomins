@@ -2,8 +2,8 @@
 <module>
     <name>mycartinfo</name>
     <displayName><![CDATA[Mon Message Panier]]></displayName>
-    <version><![CDATA[1.1.0]]></version>
-    <description><![CDATA[Ajoute un message personnalisable dans le panier avec switch d’activation et recommandations produits configurables.]]></description>
+    <version><![CDATA[1.2.0]]></version>
+    <description><![CDATA[Ajoute un message personnalisable dans le panier avec deux hooks séparés pour le bandeau et les produits, plus un switch d’activation et des recommandations configurables.]]></description>
     <author><![CDATA[Troteseil Lucas]]></author>
     <tab><![CDATA[front_office_features]]></tab>
     <is_configurable>1</is_configurable>
